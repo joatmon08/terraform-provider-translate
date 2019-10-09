@@ -1,5 +1,9 @@
 resource "translate_text" "hello" {
-  text = "Hello world!"
+  text = file("test.md")
   source_language = "en"
-  target_language = "zh"
+  target_language = "es"
+}
+
+output "translated_text" {
+  value = translate_text.hello.translated_text
 }

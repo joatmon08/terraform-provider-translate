@@ -3,6 +3,7 @@ package translate
 import (
 	"fmt"
 	"hash/fnv"
+	"strings"
 
 	"cloud.google.com/go/translate"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -60,19 +61,29 @@ func resourceTextRead(d *schema.ResourceData, m interface{}) error {
 
 	options := &translate.Options{
 		Source: source,
+		Format: translate.Text,
 	}
 
 	text := d.Get("text").(string)
-	fmt.Println(text)
+	body := strings.Split(text, "\n")
 
-	translations, err := config.Client.Translate(config.Context, []string{text}, target, options)
+	translations, err := config.Client.Translate(config.Context, body, target, options)
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("translate failed: %v", err)
 	}
 	d.SetId(hash(text))
-	d.Set("translated_text", translations[0].Text)
+	fullText := fullTranslation(translations)
+	d.Set("translated_text", fullText)
 	return nil
+}
+
+func fullTranslation(translations []translate.Translation) string {
+	full := ""
+	for _, t := range translations {
+		full = full + t.Text + "\n"
+	}
+	return full
 }
 
 func resourceTextUpdate(d *schema.ResourceData, m interface{}) error {
